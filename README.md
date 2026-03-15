@@ -182,12 +182,23 @@ https://lookerstudio.google.com/reporting/186ec3f9-e82f-4016-b9c0-d3c40b70f1da
 
 ## Analytics Insights
 
-### User Retention
+### User Breakdown and Retention
+
+
+![all_time_user_trend](screenshots/all_time_user_trend.png)
+
+
+![cohort_retentiond](screenshots/cohort_retention.png)
+
 
 - Monthly cohort retention declines sharply over time, dropping to **40%, 30%, 17%, and 3%** in months 1–4 after acquisition.
 - For cohorts acquired during campaign weeks (Mar 30, Apr 27, Jun 1) across **Facebook, Google, and referral channels**, retention drops significantly **after week 4–5**, suggesting many newly acquired users disengage shortly after the initial campaign-driven activity period.
 
 ### Miles Earning and Redemption Behavior
+
+
+![miles_mix](screenshots/miles_mix.png)
+
 
 - **Shopping contributes 65%** of miles earned, followed by **dining (25%)** and **e-commerce (10%)**
 - The overall **miles redemption rate is ~80%**, indicating strong engagement with the rewards program
