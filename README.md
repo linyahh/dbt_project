@@ -3,81 +3,252 @@
 A compact, production-minded dbt project that transforms event data into
 analytical datasets for growth, engagement, and retention analysis.
 
-This repository contains dbt models, macros, and tests used to build
-layered analytical datasets (staging → core → intermediate → marts).
+The implementation highlights key analytics engineering practices
+including:
 
-## Quick start
+-   Layered warehouse modeling built on BigQuery
+-   Reusable dbt macros
+-   Incremental pipelines with backfill capability
+-   Daily refresh orchestration
+-   Data quality testing
 
-Prerequisites:
+The project is designed to simulate a **production-ready data
+transformation pipeline**.
 
-- Python and dbt (adapter matching your warehouse)
-- A configured `profiles.yml` for your target environment
+------------------------------------------------------------------------
 
-Basic commands:
+# Architecture Overview
 
-```bash
-dbt deps         # install packages
-dbt seed         # load seed data (if any)
-dbt run          # run models
-dbt test         # run tests
-dbt docs generate
-dbt docs serve
-```
+The warehouse follows a **layered data modeling architecture** to
+separate responsibilities and ensure maintainability.
 
-To run only daily-refresh models (tagged `refresh_daily`):
+RAW SOURCE\
+event_stream_raw\
+↓\
+STAGING\
+stg_event_stream\
+↓\
+CORE\
+fct_events\
+dim_user\
+↓\
+INTERMEDIATE\
+int_user_activity_daily\
+int_user_activity_weekly\
+int_user_activity_monthly\
+↓\
+MARTS\
+fct_growth_accounting\
+fct_engagement_metrics\
+fct_user_features\
+↓\
+REPORTING\
+rpt_growth_reporting
 
-```bash
-dbt build --select tag:refresh_daily
-```
+## Layer Responsibilities
 
-If you need a backfill for incremental models, pass a var as implemented
-in the project, for example:
+### Staging
 
-```bash
+Purpose: - Clean raw data - Standardize column names and types - Apply
+minimal transformations
+
+Materialization: **view**
+
+Example model: stg_event_stream
+
+------------------------------------------------------------------------
+
+### Core
+
+Purpose: - Define canonical business entities - Build fact and dimension
+tables
+
+Materialization: **table**
+
+Example models: fct_events\
+dim_user
+
+------------------------------------------------------------------------
+
+### Intermediate
+
+Purpose: - Reusable transformations - User activity aggregation - Growth
+classification logic
+
+Example models: int_user_activity_daily\
+int_user_activity_weekly\
+int_user_activity_monthly
+
+------------------------------------------------------------------------
+
+### Marts
+
+Purpose: - Business-facing analytical datasets - Growth and engagement
+metrics
+
+Example models: fct_growth_accounting\
+fct_engagement_metrics\
+fct_user_features
+
+------------------------------------------------------------------------
+
+### Reporting
+
+Purpose: - Dashboard-ready datasets - Aggregated views for flexible
+slicing
+
+Example model: rpt_growth_reporting
+
+------------------------------------------------------------------------
+
+# dbt Macros
+
+Macros are used extensively to reduce duplicated SQL and improve
+maintainability.
+
+## Period Generation Macro
+
+A macro generates **daily, weekly, and monthly models** from a single
+template.
+
+Example:
+
+{{ generate_user_activity('day') }}\
+{{ generate_user_activity('week') }}\
+{{ generate_user_activity('month') }}
+
+This allows the same transformation logic to be reused across multiple
+time grains.
+
+------------------------------------------------------------------------
+
+## General Aggregation Macro
+
+A reusable aggregation macro enables flexible reporting queries.
+
+Users can dynamically specify dimensions such as:
+
+-   country
+-   gender
+-   utm_source
+-   event_type
+-   transaction_category
+
+The macro automatically builds grouped aggregations and supports
+multiple dimension combinations.
+
+------------------------------------------------------------------------
+
+# Incremental Processing and Backfill
+
+The `fct_events` model is implemented as an **incremental table**.
+
+Key features:
+
+-   Partitioned by `event_date`
+-   Incremental merge strategy
+-   Processes only newly arriving events during daily runs
+
+A **backfill parameter** allows historical reprocessing when needed.
+
+Example:
+
 dbt run --vars '{"backfill_start_date": "2024-01-01"}'
-```
 
-## Project layout (high level)
+This allows rebuilding historical data from a specified date without
+performing a full refresh.
 
-- `models/` — dbt models organized into `staging`, `core`, `intermediate`,
-	and `marts`
-- `macros/` — reusable SQL macros used across models
-- `analyses/` — one-off analyses
-- `tests/` — custom tests or test-related artifacts
-- `target/` — compiled artifacts and run outputs (auto-generated)
+------------------------------------------------------------------------
 
-Key model families in this repo include event facts (`fct_events`),
-user dimension (`dim_user`), and derived growth/engagement marts.
+# Daily Refresh Pipeline
 
-## Development notes
+Models that require daily updates are tagged with:
 
-- Keep transformations modular: prefer intermediate models to share
-	logic across different time grains.
-- Use macros to encapsulate repeated SQL patterns (period generation,
-	aggregation helpers, etc.).
-- Tag models that must run on a schedule (e.g., `refresh_daily`).
+tags: \['refresh_daily'\]
 
-## Testing & quality
+Example execution command:
 
-This project uses dbt tests for basic data quality checks (not null,
-uniqueness, relationships). Run `dbt test` after building models.
+dbt build --select tag:refresh_daily
 
-## Contributing
+Typical pipeline flow:
 
-If you'd like changes or have questions, open an issue or send a PR.
-Please include a short description of the change and relevant context.
+Scheduler\
+↓\
+dbt build --select tag:refresh_daily\
+↓\
+incremental fact refresh\
+↓\
+intermediate transformations\
+↓\
+mart updates\
+↓\
+reporting tables
 
-If you want help extending this README with deploy/run specifics for
-your warehouse or CI, tell me which adapter and CI provider you use and
-I’ll add step-by-step instructions.
+------------------------------------------------------------------------
 
----
+# Data Quality Testing
 
-If you'd like, I can also:
+Basic data quality assertions are implemented using **dbt tests**.
 
-- add a short `HOWTO` for local development (virtualenv, installing dbt),
-- add CI examples (GitHub Actions) for scheduled runs and tests, or
-- generate a minimal `profiles.yml` template for your warehouse.
+## Not Null Tests
 
-Tell me which of these you'd like next.
+Ensures required fields are always present.
 
+Examples: - event_key - user_id - event_ts
+
+------------------------------------------------------------------------
+
+## Uniqueness Tests
+
+Ensures primary keys are unique.
+
+Examples: - dim_user.user_id - fct_events.event_key
+
+------------------------------------------------------------------------
+
+## Relationship Tests
+
+Ensures referential integrity between tables.
+
+Example:
+
+fct_events.user_id → dim_user.user_id
+
+This prevents orphan records and enforces warehouse consistency.
+
+------------------------------------------------------------------------
+
+# Running the Project
+
+Install dependencies:
+
+dbt deps
+
+Run the full pipeline:
+
+dbt build
+
+Run only daily refresh models:
+
+dbt build --select tag:refresh_daily
+
+Run tests:
+
+dbt test
+
+------------------------------------------------------------------------
+
+# Summary
+
+This project demonstrates how dbt can be used to build a **scalable
+analytics transformation pipeline** with:
+
+-   layered warehouse design
+-   reusable SQL through macros
+-   incremental processing and backfill capability
+-   scheduled refresh patterns
+-   built-in data quality validation
+
+The implementation focuses on **maintainability, modularity, and
+reliability**, reflecting common practices in modern analytics
+engineering teams.
