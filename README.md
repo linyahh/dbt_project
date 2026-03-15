@@ -10,7 +10,6 @@ The implementation highlights key analytics engineering practices:
 - **Daily refresh** orchestration
 - Data quality **testing**
 - **BI dashboard** with analytics insights  
-  https://lookerstudio.google.com/u/0/reporting/186ec3f9-e82f-4016-b9c0-d3c40b70f1da/page/p_sijekuns1d/edit
 
 ---
 
@@ -174,7 +173,7 @@ This prevents orphan records and enforces warehouse consistency.
 # 🚀 BI Reporting
 
 Dashboard:  
-https://lookerstudio.google.com/u/0/reporting/186ec3f9-e82f-4016-b9c0-d3c40b70f1da/page/p_sijekuns1d/edit
+https://lookerstudio.google.com/reporting/186ec3f9-e82f-4016-b9c0-d3c40b70f1da
 
 ## Analytics Insights
 
