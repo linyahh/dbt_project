@@ -17,6 +17,11 @@ The implementation highlights key analytics engineering practices:
 
 The warehouse follows a **layered dbt architecture** to ensure scalability, modularity, and maintainability.
 
+BigQuery Project screenshot 
+
+![BigQuery screenshot](screenshots/bigquery.png)
+
+
 ## Design Principles
 
 ✨ Separation of concerns  
@@ -68,7 +73,7 @@ Typical logic includes:
 
 Business-facing analytical datasets used by BI, product, and growth analytics.
 
-![BigQuery screenshot](screenshots/bigquery.png)
+
 
 ---
 
