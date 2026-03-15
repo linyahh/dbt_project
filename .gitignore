@@ -1,0 +1,17 @@
+# Ignore Python virtual env
+.venv/
+
+# dbt build artifacts and logs
+target/
+logs/
+dbt_packages/
+
+# Sensitive files and secrets folder
+secrets/
+*.pem
+*.key
+.env
+profiles.yml
+
+# Ignore locally-created backups of nested repo
+dbt_project.backup-*/
