@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: fct_events
+    description: >
+      Fact table at event grain (one row per event). Incrementally loaded,
+      partitioned by event_date and clustered by user_id.
+      Filtered to events on or after the backfill_start_date variable.
+    columns:
+      - name: user_id
+        description: Unique identifier for the user.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_user')
+              field: user_id
+
+      - name: event_ts
+        description: Full timestamp of the event.
+        tests:
+          - not_null
+
+      - name: event_date
+        description: Date portion of event_ts. Used for partitioning.
+        tests:
+          - not_null
+
+      - name: event_type
+        description: Type of event (e.g. like, share, reward_search, miles_earned, miles_redeemed).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['like', 'share', 'reward_search', 'miles_earned', 'miles_redeemed']
+
+      - name: engagement_bucket
+        description: >
+          Bucketed engagement category derived from event_type.
+          pre_engagement = like, share, reward_search.
+          transaction = miles_earned, miles_redeemed.
+          other = anything else.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['pre_engagement', 'transaction', 'other']
+
+      - name: transaction_category
+        description: Category of the transaction, populated for transaction-type events.
+
+      - name: miles_amount
+        description: Miles earned or redeemed in the event. Null for non-transaction events.
+
+      - name: platform
+        description: Platform from which the event was triggered (e.g. ios, android, web).
+
+      - name: utm_source
+        description: UTM source attributed to the event.
+
+      - name: country
+        description: Country associated with the event.
+
+      - name: gender
+        description: Gender of the user at time of event.
+
+

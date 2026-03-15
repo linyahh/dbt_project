@@ -1,0 +1,1 @@
+{{ generate_user_growth_status('day') }}

@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: heymax
+    database: project-27ffa5cd-e4f5-4e27-a03
+    schema: heymax_raw
+    tables:
+      - name: event_stream_raw

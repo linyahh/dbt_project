@@ -1,0 +1,71 @@
+version: 2
+
+models:
+  - name: int_user_features_weekly
+    description: >
+      One row per user per week. Enriches weekly activity with first and primary
+      dimension attributes (utm_source, event_type, transaction_category, platform)
+      and a user_type flag indicating new vs existing.
+    columns:
+      - name: reporting_date
+        description: The weekly period start date (Monday of the week).
+        tests:
+          - not_null
+
+      - name: user_id
+        description: Unique identifier for the user.
+        tests:
+          - not_null
+
+      - name: period_grain
+        description: Grain of the period. Always 'week' for this model.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['week']
+
+      - name: user_type
+        description: >
+          'new' if this is the user's first ever active period, 'existing' otherwise.
+        tests:
+          - accepted_values:
+              values: ['new', 'existing']
+
+      - name: country
+        description: User country derived from events in the period.
+
+      - name: gender
+        description: User gender derived from events in the period.
+
+      - name: first_utm_source
+        description: First UTM source seen in the period, ordered by event_ts.
+
+      - name: first_event_type
+        description: First event type seen in the period, ordered by event_ts.
+
+      - name: first_transaction_category
+        description: First transaction category seen in the period, ordered by event_ts.
+
+      - name: first_platform
+        description: First platform seen in the period, ordered by event_ts.
+
+      - name: primary_utm_source
+        description: Most frequent UTM source in the period by event count.
+
+      - name: primary_event_type
+        description: Most frequent event type in the period by event count.
+
+      - name: primary_transaction_category
+        description: Most frequent transaction category in the period by event count.
+
+      - name: primary_platform
+        description: Most frequent platform in the period by event count.
+
+      - name: event_count
+        description: Total number of events the user had in the period.
+
+      - name: miles_earned
+        description: Total miles earned in the period.
+
+      - name: miles_redeemed
+        description: Total miles redeemed in the period.

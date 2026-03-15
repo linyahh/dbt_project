@@ -1,0 +1,15 @@
+# Example dbt `profiles.yml` template — DO NOT COMMIT real credentials
+# Copy this to `~/.dbt/profiles.yml` or to `profiles.yml` locally and
+# fill in credentials there (this file is intentionally a template).
+
+heymax_case:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: your-gcp-project-id
+      dataset: your_dataset
+      keyfile: secrets/your-service-account.json  # keep real key in secrets/
+      threads: 4
+      timeout_seconds: 300

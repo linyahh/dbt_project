@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_user
+    description: >
+      One row per user. Derives stable user attributes (gender, country) and
+      lifetime activity bounds from the raw event stream.
+    columns:
+      - name: user_id
+        description: Unique identifier for the user.
+        tests:
+          - unique
+          - not_null
+
+      - name: gender
+        description: User gender, derived via any_value from event stream.
+
+      - name: country
+        description: User country, derived via any_value from event stream.
+
+      - name: first_seen_ts
+        description: Timestamp of the user's first recorded event.
+        tests:
+          - not_null
+
+      - name: last_seen_ts
+        description: Timestamp of the user's most recent recorded event.
+        tests:
+          - not_null
+
+      - name: first_seen_date
+        description: Date of the user's first recorded event.
+
+      - name: last_seen_date
+        description: Date of the user's most recent recorded event.
+
+      - name: lifetime_events
+        description: Count of distinct event timestamps across the user's lifetime.

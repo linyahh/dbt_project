@@ -1,0 +1,81 @@
+version: 2
+
+models:
+  - name: fct_growth_user_features_daily
+    description: >
+      One row per user per engagement_type per day. Joins daily growth status with
+      user attributes and per-period event feature dimensions (first and primary).
+    columns:
+      - name: user_id
+        description: Unique identifier for the user.
+        tests:
+          - not_null
+
+      - name: period_start
+        description: Start date of the daily period.
+        tests:
+          - not_null
+
+      - name: period_grain
+        description: Grain of the period. Always 'day' for this model.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['day']
+
+      - name: engagement_type
+        description: Engagement segment. One of 'all', 'pre_engagement', or 'transaction'.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['all', 'pre_engagement', 'transaction']
+
+      - name: growth_status
+        description: >
+          User growth classification. new, retained, resurrected, or churned.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['new', 'retained', 'resurrected', 'churned']
+
+      - name: gender
+        description: User gender derived from dim_user.
+
+      - name: country
+        description: User country derived from dim_user.
+
+      - name: first_platform_in_period
+        description: First platform seen in the period, ordered by event_ts.
+
+      - name: first_utm_source_in_period
+        description: First UTM source seen in the period, ordered by event_ts.
+
+      - name: first_event_type_in_period
+        description: First event type seen in the period, ordered by event_ts.
+
+      - name: first_transaction_category_in_period
+        description: First transaction category seen in the period, ordered by event_ts.
+
+      - name: primary_platform_in_period
+        description: Most frequent platform in the period by event count.
+
+      - name: primary_utm_source_in_period
+        description: Most frequent UTM source in the period by event count.
+
+      - name: primary_event_type_in_period
+        description: Most frequent event type in the period by event count.
+
+      - name: primary_transaction_category_in_period
+        description: Most frequent transaction category in the period by event count.
+
+      - name: period_event_count
+        description: Total number of events the user had in the period.
+
+      - name: period_miles_amount
+        description: Total miles amount across all events in the period.
+
+      - name: has_transaction_event
+        description: 1 if the user had at least one transaction event in the period, else 0.
+
+      - name: has_pre_engagement_event
+        description: 1 if the user had at least one pre-engagement event in the period, else 0.

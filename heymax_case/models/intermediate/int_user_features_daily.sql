@@ -1,0 +1,1 @@
+{{ generate_user_period_features('day') }}

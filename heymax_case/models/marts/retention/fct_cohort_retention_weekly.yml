@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: fct_cohort_retention_weekly
+    description: >
+      Weekly cohort retention. One row per cohort_period, period_number, engagement_type,
+      country, and gender. Shows how many users from each cohort remained active
+      in subsequent weeks.
+    columns:
+      - name: cohort_period
+        description: The week in which the cohort of users first became active (Monday of week).
+        tests:
+          - not_null
+
+      - name: period_number
+        description: Number of weeks since the cohort's first active week. 0 = cohort week.
+        tests:
+          - not_null
+
+      - name: engagement_type
+        description: Engagement segment. One of 'all', 'pre_engagement', or 'transaction'.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['all', 'pre_engagement', 'transaction']
+
+      - name: country
+        description: User country derived from events.
+
+      - name: gender
+        description: User gender derived from events.
+
+      - name: cohort_size
+        description: Total number of distinct users in the cohort.
+
+      - name: retained_users
+        description: Number of cohort users still active in this period_number.
+
+      - name: retention_rate
+        description: retained_users / cohort_size. Null-safe division.
+
+      - name: period_grain
+        description: Grain of the period. Always 'week' for this model.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['week']

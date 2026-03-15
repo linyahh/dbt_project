@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: fct_cohort_retention_combined
+    description: >
+      Union of fct_cohort_retention_monthly and fct_cohort_retention_weekly.
+      Use period_grain to filter to the desired granularity.
+    columns:
+      - name: cohort_period
+        description: The period in which the cohort first became active. Interpretation depends on period_grain.
+        tests:
+          - not_null
+
+      - name: period_number
+        description: Number of periods since the cohort's first active period. 0 = cohort period.
+        tests:
+          - not_null
+
+      - name: engagement_type
+        description: Engagement segment. One of 'all', 'pre_engagement', or 'transaction'.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['all', 'pre_engagement', 'transaction']
+
+      - name: country
+        description: User country derived from events.
+
+      - name: gender
+        description: User gender derived from events.
+
+      - name: cohort_size
+        description: Total number of distinct users in the cohort.
+
+      - name: retained_users
+        description: Number of cohort users still active in this period_number.
+
+      - name: retention_rate
+        description: retained_users / cohort_size. Null-safe division.
+
+      - name: period_grain
+        description: Grain of the period. One of 'week' or 'month'.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['week', 'month']

@@ -1,0 +1,1 @@
+{{ generate_growth_user_features('week') }}
