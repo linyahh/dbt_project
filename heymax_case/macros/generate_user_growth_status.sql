@@ -23,7 +23,6 @@
 
     ),
 
-    -- one row per user / engagement_type / period
     activity as (
 
         select
@@ -45,8 +44,6 @@
 
     ),
 
-    -- use lag() to find the previous active period for each user/engagement row
-    -- this avoids correlated subqueries which BigQuery does not support on CTEs
     activity_with_lag as (
 
         select
@@ -56,13 +53,7 @@
             lag(period_start) over (
                 partition by user_id, engagement_type
                 order by period_start
-            ) as prev_active_period,
-            -- count of active periods strictly before this one
-            count(*) over (
-                partition by user_id, engagement_type
-                order by period_start
-                rows between unbounded preceding and 1 preceding
-            ) as prior_active_period_count
+            ) as prev_active_period
         from activity
 
     ),
@@ -111,21 +102,6 @@
 
     ),
 
-    -- for each user/engagement, the second most recent active period start
-    -- used to detect if there's any activity before the prior period (for churned users
-    -- who have no activity row at the prior period to join against)
-    second_most_recent_activity as (
-
-        select
-            user_id,
-            engagement_type,
-            max(period_start) as second_most_recent_period
-        from activity_with_lag
-        where prior_active_period_count >= 1  -- at least one period before this one
-        group by 1, 2
-
-    ),
-
     user_engagement_spine as (
 
         select
@@ -135,6 +111,22 @@
         from first_activity_by_engagement fe
         join calendar_spine c
           on c.period_start >= fe.first_period_start_by_engagement
+
+    ),
+
+    last_activity_before_period as (
+
+        select
+            s.user_id,
+            s.engagement_type,
+            s.period_start,
+            max(a.period_start) as last_active_period_before_current
+        from user_engagement_spine s
+        left join activity a
+          on s.user_id = a.user_id
+         and s.engagement_type = a.engagement_type
+         and a.period_start < s.period_start
+        group by 1, 2, 3
 
     ),
 
@@ -148,23 +140,20 @@
             case when curr.user_id is not null then 1 else 0 end as is_active_current,
             case when prev.user_id is not null then 1 else 0 end as is_active_prior,
 
-            -- has_historical_before_prior: activity exists strictly before the prior period
-            case
-                when prev_lag.prev_active_period is not null
-                    then 1
-                when sma.second_most_recent_period is not null
-                     and sma.second_most_recent_period < {{ prev_expr }}
-                    then 1
-                else 0
-            end as has_historical_before_prior,
+            curr_lag.prev_active_period,
+            lap.last_active_period_before_current,
 
-            -- has_any_prior_activity: user was active in any period before the current one
-            -- used for the churned classification (not active now, but active before)
             case
-                when prev.user_id is not null then 1
-                when sma.second_most_recent_period is not null then 1
+                when lap.last_active_period_before_current is not null then 1
                 else 0
-            end as has_any_prior_activity
+            end as has_any_prior_activity,
+
+            case
+                when curr_lag.prev_active_period is not null
+                     and curr_lag.prev_active_period < {{ prev_expr }}
+                    then 1
+                else 0
+            end as has_historical_before_prior
 
         from user_engagement_spine s
         left join activity curr
@@ -175,15 +164,14 @@
           on s.user_id = prev.user_id
          and s.engagement_type = prev.engagement_type
          and prev.period_start = {{ prev_expr }}
-        -- lag info for the prior period row (resurrected: was there activity before T-1?)
-        left join activity_with_lag prev_lag
-          on s.user_id = prev_lag.user_id
-         and s.engagement_type = prev_lag.engagement_type
-         and prev_lag.period_start = {{ prev_expr }}
-        -- second most recent activity (churned: any history before T-1?)
-        left join second_most_recent_activity sma
-          on s.user_id = sma.user_id
-         and s.engagement_type = sma.engagement_type
+        left join activity_with_lag curr_lag
+          on s.user_id = curr_lag.user_id
+         and s.engagement_type = curr_lag.engagement_type
+         and s.period_start = curr_lag.period_start
+        left join last_activity_before_period lap
+          on s.user_id = lap.user_id
+         and s.engagement_type = lap.engagement_type
+         and s.period_start = lap.period_start
 
     ),
 
@@ -200,26 +188,18 @@
             s.has_historical_before_prior,
 
             case
-                -- New: active now, no prior period activity, no historical activity before prior
-                -- is_active_prior = 0 AND has_historical_before_prior = 0 together mean
-                -- this is definitively the user's first-ever active period for this engagement type
                 when s.is_active_current = 1
-                     and s.is_active_prior = 0
-                     and s.has_historical_before_prior = 0
+                     and s.prev_active_period is null
                     then 'new'
 
-                -- Retained: active now, also active in prior period
                 when s.is_active_current = 1
-                     and s.is_active_prior = 1
+                     and s.prev_active_period = {{ prev_expr }}
                     then 'retained'
 
-                -- Resurrected: active now, not active in prior period, but active before prior
                 when s.is_active_current = 1
-                     and s.is_active_prior = 0
-                     and s.has_historical_before_prior = 1
+                     and s.prev_active_period < {{ prev_expr }}
                     then 'resurrected'
 
-                -- Churned: not active now, but active in some prior period
                 when s.is_active_current = 0
                      and s.has_any_prior_activity = 1
                     then 'churned'
