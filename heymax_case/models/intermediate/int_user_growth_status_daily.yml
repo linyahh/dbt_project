@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: int_user_growth_status_daily
+    description: >
+      One row per user per engagement_type per day. Classifies each user into
+      a growth status (new, retained, resurrected, churned) based on their
+      activity pattern relative to the prior day.
+    columns:
+      - name: user_id
+        description: Unique identifier for the user.
+        tests:
+          - not_null
+
+      - name: period_start
+        description: Start date of the daily period.
+        tests:
+          - not_null
+
+      - name: period_grain
+        description: Grain of the period. Always 'day' for this model.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['day']
+
+      - name: engagement_type
+        description: >
+          Engagement segment. One of 'all', 'pre_engagement', or 'transaction'.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['all', 'pre_engagement', 'transaction']
+
+      - name: is_active_current
+        description: 1 if the user was active in the current period, else 0.
+
+      - name: is_active_prior
+        description: 1 if the user was active in the prior period, else 0.
+
+      - name: has_historical_before_prior
+        description: 1 if the user had any activity in periods before the prior period, else 0.
+
+      - name: growth_status
+        description: >
+          User growth classification for the period.
+          new = first-ever active period for this engagement type.
+          retained = active now and in prior period.
+          resurrected = active now, not in prior, but active before prior.
+          churned = not active now, but active in some prior period.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['new', 'retained', 'resurrected', 'churned']
+
+      - name: is_new_customer
+        description: True if this is the user's first-ever active period across all engagement types.
+
+      - name: customer_status
+        description: >
+          'new_customer' if is_new_customer is true, 'existing_customer' otherwise.
+        tests:
+          - accepted_values:
+              values: ['new_customer', 'existing_customer']
