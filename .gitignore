@@ -15,3 +15,6 @@ profiles.yml
 
 # Ignore locally-created backups of nested repo
 dbt_project.backup-*/
+
+# If the nested `dbt_project` folder is an independent repo, don't track it in the parent
+dbt_project/
