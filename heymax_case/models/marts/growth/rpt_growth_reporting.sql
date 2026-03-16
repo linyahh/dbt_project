@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized='incremental',tags=["refresh_daily"] ) }}
 
 {{ generate_growth_reporting_aggregation(
     source_model='fct_growth_user_features_combined',

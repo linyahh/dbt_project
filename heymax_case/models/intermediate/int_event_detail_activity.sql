@@ -1,3 +1,6 @@
+{{ config(tags=["refresh_daily"]) }}
+
+
 with events as (
 
     select

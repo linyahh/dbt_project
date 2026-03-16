@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='view',tags=["refresh_daily"] ) }}
 
 
 SELECT * FROM {{ ref('fct_growth_user_features_daily') }}
