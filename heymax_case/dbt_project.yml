@@ -41,7 +41,7 @@ models:
     intermediate:
       +schema: heymax_intermediate
       +materialized: table
-      +tags: ['refresh_daily']
+      # +tags: ['refresh_daily']
 
     core:
       +schema: heymax_core

@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized='table',tags=["refresh_daily"] ) }}
 
 with base as (
 
