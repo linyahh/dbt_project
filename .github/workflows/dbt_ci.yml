@@ -27,15 +27,31 @@ jobs:
         working-directory: heymax_case
         run: dbt deps
 
-      - name: Compile dbt project (generates manifest)
-        working-directory: heymax_case
+      - name: Generate profiles.yml from secrets
         env:
-          DBT_PROFILES_DIR: ${{ github.workspace }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_DATASET: ${{ secrets.GCP_DATASET }}
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa_key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa_key.json
-          dbt compile --profiles-dir $DBT_PROFILES_DIR
+          mkdir -p /tmp/dbt
+          cat > /tmp/dbt/profiles.yml <<EOF
+          heymax_case:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: ${GCP_PROJECT_ID}
+                dataset: ${GCP_DATASET}
+                keyfile: /tmp/sa_key.json
+                threads: 4
+                timeout_seconds: 300
+          EOF
+
+      - name: Compile dbt project (generates manifest)
+        working-directory: heymax_case
+        run: dbt compile --profiles-dir /tmp/dbt
 
       - name: Check layer dependency rules
         run: python ci/check_layer_dependencies.py heymax_case/target/manifest.json
@@ -61,11 +77,28 @@ jobs:
         working-directory: heymax_case
         run: dbt deps
 
-      - name: Run dbt tests
-        working-directory: heymax_case
+      - name: Generate profiles.yml from secrets
         env:
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_DATASET: ${{ secrets.GCP_DATASET }}
           GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GCP_SA_KEY }}
         run: |
           echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa_key.json
-          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa_key.json
-          dbt test --profiles-dir ${{ github.workspace }} --select state:modified+
+          mkdir -p /tmp/dbt
+          cat > /tmp/dbt/profiles.yml <<EOF
+          heymax_case:
+            target: dev
+            outputs:
+              dev:
+                type: bigquery
+                method: service-account
+                project: ${GCP_PROJECT_ID}
+                dataset: ${GCP_DATASET}
+                keyfile: /tmp/sa_key.json
+                threads: 4
+                timeout_seconds: 300
+          EOF
+
+      - name: Run dbt tests
+        working-directory: heymax_case
+        run: dbt test --profiles-dir /tmp/dbt --select state:modified+
