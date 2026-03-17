@@ -44,6 +44,7 @@ jobs:
                 method: service-account
                 project: ${GCP_PROJECT_ID}
                 dataset: ${GCP_DATASET}
+                schema: ${GCP_DATASET}
                 keyfile: /tmp/sa_key.json
                 threads: 4
                 timeout_seconds: 300
@@ -94,6 +95,7 @@ jobs:
                 method: service-account
                 project: ${GCP_PROJECT_ID}
                 dataset: ${GCP_DATASET}
+                schema: ${GCP_DATASET}
                 keyfile: /tmp/sa_key.json
                 threads: 4
                 timeout_seconds: 300
