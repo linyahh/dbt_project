@@ -27,28 +27,37 @@ jobs:
         working-directory: heymax_case
         run: dbt deps
 
-      - name: Generate profiles.yml from secrets
+      - name: Generate profiles.yml
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_DATASET: ${{ secrets.GCP_DATASET }}
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GCP_SA_KEY }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_LOCATION: ${{ secrets.GCP_LOCATION }}
         run: |
-          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa_key.json
           mkdir -p /tmp/dbt
-          cat > /tmp/dbt/profiles.yml <<EOF
-          heymax_case:
-            target: dev
-            outputs:
-              dev:
-                type: bigquery
-                method: service-account
-                project: ${GCP_PROJECT_ID}
-                dataset: ${GCP_DATASET}
-                schema: ${GCP_DATASET}
-                keyfile: /tmp/sa_key.json
-                threads: 4
-                timeout_seconds: 300
-          EOF
+          python - <<'PYEOF'
+          import json, os, yaml
+          profile = {
+              "heymax_case": {
+                  "target": "dev",
+                  "outputs": {
+                      "dev": {
+                          "type": "bigquery",
+                          "method": "service-account-json",
+                          "project": os.environ["GCP_PROJECT_ID"],
+                          "dataset": os.environ["GCP_DATASET"],
+                          "keyfile_json": json.loads(os.environ["GCP_SA_KEY"]),
+                          "location": os.environ.get("GCP_LOCATION", "US"),
+                          "threads": 4,
+                          "timeout_seconds": 300,
+                      }
+                  },
+              }
+          }
+          with open("/tmp/dbt/profiles.yml", "w") as f:
+              yaml.dump(profile, f, default_flow_style=False)
+          print("profiles.yml written successfully")
+          PYEOF
 
       - name: Compile dbt project (generates manifest)
         working-directory: heymax_case
@@ -78,28 +87,37 @@ jobs:
         working-directory: heymax_case
         run: dbt deps
 
-      - name: Generate profiles.yml from secrets
+      - name: Generate profiles.yml
         env:
           GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
           GCP_DATASET: ${{ secrets.GCP_DATASET }}
-          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.GCP_SA_KEY }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_LOCATION: ${{ secrets.GCP_LOCATION }}
         run: |
-          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa_key.json
           mkdir -p /tmp/dbt
-          cat > /tmp/dbt/profiles.yml <<EOF
-          heymax_case:
-            target: dev
-            outputs:
-              dev:
-                type: bigquery
-                method: service-account
-                project: ${GCP_PROJECT_ID}
-                dataset: ${GCP_DATASET}
-                schema: ${GCP_DATASET}
-                keyfile: /tmp/sa_key.json
-                threads: 4
-                timeout_seconds: 300
-          EOF
+          python - <<'PYEOF'
+          import json, os, yaml
+          profile = {
+              "heymax_case": {
+                  "target": "dev",
+                  "outputs": {
+                      "dev": {
+                          "type": "bigquery",
+                          "method": "service-account-json",
+                          "project": os.environ["GCP_PROJECT_ID"],
+                          "dataset": os.environ["GCP_DATASET"],
+                          "keyfile_json": json.loads(os.environ["GCP_SA_KEY"]),
+                          "location": os.environ.get("GCP_LOCATION", "US"),
+                          "threads": 4,
+                          "timeout_seconds": 300,
+                      }
+                  },
+              }
+          }
+          with open("/tmp/dbt/profiles.yml", "w") as f:
+              yaml.dump(profile, f, default_flow_style=False)
+          print("profiles.yml written successfully")
+          PYEOF
 
       - name: Run dbt tests
         working-directory: heymax_case
